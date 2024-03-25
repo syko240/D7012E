@@ -2,7 +2,7 @@ import Data.Char (ord,chr)
 
 smallestKSets :: Int -> [Int] -> [[Int]]
 smallestKSets _ [] = error "list is empty"
-smallestKSets xs k = error "tbc"
+smallestKSets k xs = error "tbc"
 
 main :: IO ()
 main = do
