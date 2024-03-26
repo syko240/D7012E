@@ -1,47 +1,65 @@
 import Data.Char (ord,chr)
 
-sumList :: Num a => [a] -> a
-sumList list = foldr (+) 0 list
+sumOf :: Num a => [a] -> a
+sumOf = sum
+
+-- Sorting
 
 merge :: [(Int, Int, Int)] -> [(Int, Int, Int)] -> [(Int, Int, Int)]
-merge xs [] = xs
-merge [] ys = ys
-merge ((x1, x2, x3) : xs) ((y1, y2, y3) : ys)
-    | x1 <= y1  = (x1, x2, x3) : merge xs ((y1, y2, y3) : ys)
-    | otherwise = (y1, y2, y3) : merge ((x1, x2, x3) : xs) ys
+merge left [] = left
+merge [] right = right
+merge ((l1, l2, l3) : left) ((r1, r2, r3) : right)
+    | l1 <= r1 = (l1, l2, l3) : merge left ((r1, r2, r3) : right)
+    | otherwise = (r1, r2, r3) : merge ((l1, l2, l3) : left) right
 
 sortList :: [(Int, Int, Int)] -> [(Int, Int, Int)]
-sortList []  = []
+sortList [] = []
 sortList [x] = [x]
-sortList xs  = let (firstHalf, secondHalf) = splitAt (length xs `div` 2) xs
-               in merge (sortList firstHalf) (sortList secondHalf)
+sortList lst = let (left, right) = splitAt (length lst `div` 2) lst
+               in merge (sortList left) (sortList right)
+
+-- Compute Sublists
 
 findSets :: [Int] -> [(Int, Int, Int)]
-findSets list = [(sumList (subList i j), i, j) | i <- [0..length list - 1], j <- [i..length list - 1]]
+findSets lst = [(sumOf (subList i j), i, j) | i <- [0..length lst - 1], j <- [i..length lst - 1]]
     where
-        subList start end = take (end - start + 1) (drop start list)
+        subList start end = take (end - start + 1) (drop start lst)
 
 smallestKSets :: Int -> [Int] -> [(Int, Int, Int)]
 smallestKSets _ [] = error "list is empty"
-smallestKSets k list = take k (sortList (findSets list))
+smallestKSets k lst = take k (sortList (findSets lst))
 
-output :: Int -> [Int] -> [(Int, Int, Int)] -> IO ()
-output k list res = do
+-- Output Formating
+
+output :: [Int] -> [(Int, Int, Int)] -> IO ()
+output lst res = do
     putStrLn "\tsize\ti\tj\tsublist"
-    printTuples (take k res)
+    printRows res
   where
-    printTuples [] = return ()
-    printTuples ((a, b, c) : xs) = do
-        let sublistStr = show (subList b c list)
-        putStrLn ("\t" ++ show a ++ "\t" ++ show (b+1) ++ "\t" ++ show (c+1) ++ "\t" ++ sublistStr)
-        printTuples xs
+    printRows [] = return ()
+    printRows ((sum, i, j) : remainingRows) = do
+        let sublistStr = show (extractSublist i j lst)
+        putStrLn ("\t" ++ show sum ++ "\t" ++ show (i + 1) ++ "\t" ++ show (j + 1) ++ "\t" ++ sublistStr)
+        printRows remainingRows
 
-    subList i j lst = take (j - i + 1) $ drop i lst
+    extractSublist start end lst = take (end - start + 1) (drop start lst)
+
+-- Testing
+
+testCases :: [(Int, [Int])]
+testCases = [
+    (15, [x*(-1)^x | x <- [1..100]]),
+    (6, [24, -11, -34, 42, -24, 7, -19, 21]),
+    (8, [3, 2, -4, 3, 2, -5, -2, 2, 3, -3, 2, -5, 6, -2, 2, 3])
+    ]
+
+test :: [(Int, [Int])] -> IO ()
+test [] = return ()
+test ((k, lst) : remainingTests) = do
+    let res = smallestKSets k lst
+    output lst res
+    putStrLn ""
+    test remainingTests
 
 main :: IO ()
-main = do
-    let k = 3 :: Int
-    let list = [-1, 2, -3, 4, -5] :: [Int]
-    let res = smallestKSets k list
-    output k list res
-    --print ( smallestKSets k list )
+main = test testCases
