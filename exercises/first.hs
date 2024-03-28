@@ -7,7 +7,7 @@ threeEqual :: Int -> Int -> Int -> Bool
 threeEqual m n p = (m==n) && (n==p)
 
 fourEqual :: Int -> Int -> Int -> Int -> Bool
-fourEqual x y z k = (threeEqual x y z) && (threeEqual y z k)
+fourEqual x y z k = threeEqual x y z && threeEqual y z k
 
 -- 3.15
 numberNDroots :: Float -> Float -> Float -> Int
@@ -50,7 +50,13 @@ addMult a b
     | b > 0 = a + addMult a (b-1)
     | otherwise = 0
 
--- 4.8
+-- 4.8 --fix
+floorSqrt :: Int -> Int
+floorSqrt num = sqrtf num 0
+    where
+        sqrtf num current
+            | current * current > num = current - 1
+            | otherwise = sqrtf num (current + 1)
 
 -- 4.9
 f :: Int -> Int
