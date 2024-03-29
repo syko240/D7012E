@@ -1,4 +1,4 @@
-import Prelude hiding (elem)
+import Prelude hiding (elem, product, and, or, unzip, reverse, drop)
 
 -- 5.2
 orderTriple :: (Int, Int, Int) -> (Int, Int, Int)
@@ -50,3 +50,121 @@ pushRight :: Int -> String -> String
 pushRight linelength str = replicate (linelength - length str) ' ' ++ str
 
 -- 6.29
+-- barcode, name, price
+type BillType = [(Int, String, Double)]
+
+discountItemCount :: BillType -> Int
+discountItemCount [] = 0
+discountItemCount ((x, _, _) : xs)
+    | x == 1234 = 1 + discountItemCount xs
+    | otherwise = discountItemCount xs
+
+makeDiscount :: Int -> Int
+makeDiscount x = x `div` 2
+
+calculateTotal :: BillType -> Double
+calculateTotal [] = 0
+calculateTotal ((_, _, price) : xs) = price + calculateTotal xs
+
+formatBill :: Int -> BillType -> String
+formatBill discountAmount items =
+    let header = "              Haskell Stores\n"
+        formatItem (barcode, name, price) =
+            name ++ replicate (35 - length name) '.' ++ " " ++ formatPrice price ++ "\n"
+        formatPrice price =
+            let dollars = floor price :: Int
+                cents = round ((price - fromIntegral dollars) * 100) :: Int
+                centsStr = if cents < 10 then "0" ++ show cents else show cents
+            in show dollars ++ "." ++ centsStr
+        itemLines = concat (map formatItem items)
+        totalAmount = calculateTotal items - fromIntegral discountAmount
+        discountLine = "Discount" ++ replicate 27 '.' ++ " " ++ show discountAmount ++ ".00\n"
+        totalLine = "Total" ++ replicate 30 '.' ++ " " ++ formatPrice totalAmount ++ "\n"
+    in header ++ itemLines ++ discountLine ++ totalLine
+
+bill :: BillType
+bill = [
+    (1234, "Dry Sherry, 1lt", 5.40),
+    (4719, "Fish Fingers", 1.21),
+    (3814, "Orange Jelly", 0.56),
+    (1112, "Hula Hoops (Giant)", 1.33),
+    (1113, "Unknown Item", 0.00),
+    (1234, "Dry Sherry, 1lt", 5.40)
+    ]
+
+printBill :: IO ()
+printBill = do
+    putStr (formatBill (makeDiscount (discountItemCount bill)) bill)
+
+-- 7.2
+listBS :: [Int] -> Int
+listBS [] = 0
+listBS [x] = x
+listBS (x : y : _) = x + y
+
+-- 7.3
+firstPlusOne :: [Int] -> Int
+firstPlusOne xs = if null xs then 0 else 1 + head xs
+
+sumFirstTwo :: [Int] -> Int
+sumFirstTwo xs
+    | null xs = 0
+    | null (tail xs) = head xs
+    | otherwise = head xs + head (tail xs)
+
+-- 7.4
+product :: [Int] -> Int
+product xs = foldr (*) 1 xs
+
+-- 7.5
+and :: [Bool] -> Bool
+and = foldr (&&) True
+
+or :: [Bool] -> Bool
+or = foldr (||) False
+
+-- 7.7
+unique :: [Int] -> [Int]
+unique xs = [x | x <- xs, count x xs == 1]
+    where
+        count x [] = 0
+        count x (y : ys)
+            | y == x = 1 + count x ys
+            | otherwise = count x ys
+
+-- 7.8
+unzip :: [(Int, Int)] -> [Int]
+unzip [] = []
+unzip ((x, y) : ys) = [x] ++ [y] ++ unzip ys
+
+reverse :: [a] -> [a]
+reverse [] = []
+reverse (x : xs) = reverse xs ++ [x]
+
+-- 7.9
+iSort :: [Int] -> [Int]
+iSort [] = []
+iSort [x] = [x]
+iSort (x : xs) = insert (iSort xs)
+    where
+        insert [] = [x]
+        insert (y : ys)
+            | x < y = x : y : ys
+            | otherwise = y : insert ys
+
+merge :: [Int] -> [Int] -> [Int]
+merge left [] = left
+merge [] right = right
+merge (l : left) (r : right)
+    | l <= r = l : merge left (r : right)
+    | otherwise = r : merge (l : left) right
+
+mergeSort :: [Int] -> [Int]
+mergeSort [] = []
+mergeSort [x] = [x]
+mergeSort xs = let (left, right) = splitAt (length xs `div` 2) xs
+               in merge (mergeSort left) (mergeSort right)
+
+-- 7.14
+drop :: Int -> [Int] -> [Int]
+drop x xs = xs [last (take x xs)..] 
