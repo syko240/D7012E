@@ -1,4 +1,5 @@
-import Prelude hiding (elem, product, and, or, unzip, reverse, drop)
+import Prelude hiding (elem, product, and, or, unzip, reverse, drop, splitAt)
+import Data.Char (isAlpha, toLower)
 
 -- 5.2
 orderTriple :: (Int, Int, Int) -> (Int, Int, Int)
@@ -166,5 +167,53 @@ mergeSort xs = let (left, right) = splitAt (length xs `div` 2) xs
                in merge (mergeSort left) (mergeSort right)
 
 -- 7.14
-drop :: Int -> [Int] -> [Int]
-drop x xs = xs [last (take x xs)..] 
+drop :: Int -> [a] -> [a]
+drop n [] = []
+drop n xs | n <= 0 = xs
+drop n (_ : xs) = drop (n-1) xs 
+
+splitAt :: Int -> [a] -> ([a], [a])
+splitAt n [] = ([], [])
+splitAt n xs | n <= 0 = ([], xs)
+splitAt n (x : xs) = 
+    let (firstPart, secondPart) = splitAt (n-1) xs
+    in if n > 0 then (x : firstPart, secondPart) else ([], x : xs)
+
+-- 7.18
+isSublist :: String -> String -> Bool
+isSublist [] _ = True
+isSublist _ [] = False
+isSublist (x : xs) (y : ys)
+    | x == y = isSublist xs ys
+    | otherwise = isSublist (x : xs) ys
+
+isSubsequence :: String -> String -> Bool
+isSubsequence [] _ = True
+isSubsequence _ [] = False
+isSubsequence (x:xs) (y:ys)
+    | x == y = isSubsequence xs ys
+    | otherwise = isSubsequence (x : xs) ys
+
+-- isSublist "ship" "Fish & Chips"
+-- isSublist "hippies" "Fish & Chips"
+-- isSubsequence "Chip" "Fish & Chips"
+-- isSubsequence "Chin up" "Fish & Chips"
+
+-- 7.25
+isPalinBasic :: String -> Bool
+isPalinBasic s = s == reverse s
+
+isPalin :: String -> Bool
+isPalin s = let ben = map toLower (filter isAlpha s)
+            in ben == reverse ben
+
+-- isPalin "Madam I'm Adam"
+
+-- 7.26
+subst :: String -> String -> String -> String
+subst oldSub newSub [] = []
+subst oldSub newSub st
+    | take (length oldSub) st == oldSub = newSub ++ drop (length oldSub) st
+    | otherwise = head st : subst oldSub newSub (tail st)
+
+-- subst "much" "tall" "How much is that?"
