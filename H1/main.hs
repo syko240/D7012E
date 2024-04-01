@@ -33,6 +33,7 @@ smallestKSets k lst = take k (sortList (findSets lst))
 
 output :: [Int] -> [(Int, Int, Int)] -> IO ()
 output lst res = do
+    putStrLn ("\tEntire list: " ++ show lst ++ "\n")
     putStrLn "\tsize\ti\tj\tsublist"
     printRows res
   where
