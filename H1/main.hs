@@ -1,8 +1,5 @@
 import Data.Char (ord,chr)
 
-sumOf :: Num a => [a] -> a
-sumOf = sum
-
 -- Sorting
 
 merge :: [(Int, Int, Int)] -> [(Int, Int, Int)] -> [(Int, Int, Int)]
@@ -21,7 +18,7 @@ sortList lst = let (left, right) = splitAt (length lst `div` 2) lst
 -- Compute Sublists
 
 findSets :: [Int] -> [(Int, Int, Int)]
-findSets lst = [(sumOf (subList i j), i, j) | i <- [0..length lst - 1], j <- [i..length lst - 1]]
+findSets lst = [(sum (subList i j), i, j) | i <- [0..length lst - 1], j <- [i..length lst - 1]]
     where
         subList start end = take (end - start + 1) (drop start lst)
 
