@@ -1,3 +1,5 @@
+-- Author: André Roaas
+
 import Data.Char (ord,chr)
 
 -- Sorting
