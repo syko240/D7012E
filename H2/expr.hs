@@ -124,6 +124,7 @@ mkfun (body, Var var) = \x -> eval body [(var, x)]
 
 -- example
 f = mkfun (parse "x*x+2", Var "x")
+-- f 3.0
 
 -- Newton-Raphson formula: x_{n+1} = x_n - (f x_n / f' x_n)
 findzero :: String -> String -> Float -> Float
