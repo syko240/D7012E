@@ -2,6 +2,7 @@
 
 import Data.Char
 
+-- Already supports function application through the 'App String EXPR' constructor
 data EXPR = Const Int
      | Var String
      | Op String EXPR EXPR
@@ -10,7 +11,7 @@ data EXPR = Const Int
 parse :: String -> EXPR
 parse = fst . buildexpr
   where
-    notfirst p (_,[]) = True
+    notfirst p (_, []) = True
     notfirst p (_,x:xs) = not (p x)
     
     buildnumber :: String -> (EXPR,String)
@@ -56,6 +57,8 @@ unparse :: EXPR -> String
 unparse (Const n) = show n
 unparse (Var s) = s
 unparse (Op oper e1 e2) = "(" ++ unparse e1 ++ oper ++ unparse e2 ++ ")"
+-- unparse was missing pattern for handling 'App' constructor
+unparse (App func e) = func ++ "(" ++ unparse e ++ ")"
 
 eval :: EXPR -> [(String,Float)] -> Float
 eval (Const n) _ = fromIntegral n
@@ -64,6 +67,11 @@ eval (Op "+" left right) env = eval left env + eval right env
 eval (Op "-" left right) env = eval left env - eval right env
 eval (Op "*" left right) env = eval left env * eval right env
 eval (Op "/" left right) env = eval left env / eval right env
+-- We can use the already defined App from EXPR
+eval (App "sin" e) env = sin (eval e env)
+eval (App "cos" e) env = cos (eval e env)
+eval (App "log" e) env = log (eval e env)
+eval (App "exp" e) env = exp (eval e env)
 
 diff :: EXPR -> EXPR -> EXPR
 diff _ (Const _) = Const 0
@@ -76,6 +84,17 @@ diff v (Op "*" e1 e2) =
   Op "+" (Op "*" (diff v e1) e2) (Op "*" e1 (diff v e2))
 diff v (Op "/" e1 e2) =
   Op "/" (Op "-" (Op "*" (diff v e1) e1) (Op "*" e1 (diff v e2))) (Op "*" e2 e2)
+
+-- diff for sin, cos, log and exp
+-- d(sin(u))/dx = cos(u) * du/dx
+diff v (App "sin" e) = Op "*" (App "cos" e) (diff v e)
+-- d(cos(u))/dx = -sin(u) * du/dx
+diff v (App "cos" e) = Op "*" (Op "-" (Const 0) (App "sin" e)) (diff v e)
+-- d(log(u))/dx = 1/u * du/dx
+diff v (App "log" e) = Op "*" (Op "/" (Const 1) e) (diff v e)
+-- d(exp(u))/dx = exp(u) * du/dx
+diff v (App "exp" e) = Op "*" (App "exp" e) (diff v e)
+
 diff _ _ = error "can not compute the derivative"
 
 simplify :: EXPR -> EXPR
@@ -94,3 +113,24 @@ simplify (Op oper left right) =
       ("/",e,Const 1) -> e
       ("-",le,re)     -> if left==right then Const 0 else Op "-" le re
       (op,le,re)      -> Op op le re
+
+-- Simplify the argument of the function
+simplify (App func e) = App func (simplify e)
+
+-- The 'mkfun' function will create a function that takes a float, representing the value
+-- of the variable var, and returns a float by evaluating the 'EXPR' body where var is
+-- bound to the input float value
+mkfun :: (EXPR, EXPR) -> (Float -> Float)
+mkfun (body, Var var) = \x -> eval body [(var, x)]
+
+-- example
+f = mkfun (parse "x*x+2", Var "x")
+
+-- Var -> body -> x0
+findzero :: String -> String -> Float -> Float
+findzero var body x0 = 1.0
+
+-- findzero "x" "x*x*x+x-1" 1.0
+-- = 0.68232775
+-- findzero "y" "cos(y)*sin(y)" 2.0
+-- = 1.5707964
