@@ -70,8 +70,18 @@ shw prec (Sub t u) = parens (prec>5) (shw 5 t ++ "-" ++ shw 6 u)
 shw prec (Mul t u) = parens (prec>6) (shw 6 t ++ "*" ++ shw 6 u)
 shw prec (Div t u) = parens (prec>6) (shw 6 t ++ "/" ++ shw 7 u)
 
+-- 2
 value :: Expr -> Dictionary.T String Integer -> Integer
-value (Num n) _ = error "value not implemented"
+value (Num n) _ = n
+value (Var x) dic = case Dictionary.lookup x dic of
+    Just y -> y
+    Nothing -> error ("Variable " ++ x ++ " not defined")
+value (Add e1 e2) dic = value e1 dic + value e2 dic
+value (Sub e1 e2) dic = value e1 dic - value e2 dic
+value (Mul e1 e2) dic = value e1 dic * value e2 dic
+value (Div e1 e2) dic = let v2 = value e2 dic in
+    if v2 == 0 then error "Division by zero"
+    else value e1 dic `div` v2
 
 instance Parse Expr where
     parse = expr

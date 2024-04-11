@@ -16,32 +16,38 @@ iter m = m # iter m >-> cons ! return []
 
 cons(a, b) = a:b
 
+-- 1
 (-#) :: Parser a -> Parser b -> Parser b
-m -# n = error "-# not implemented"
+m -# n = m # n >-> snd
 
+-- 1
 (#-) :: Parser a -> Parser b -> Parser a
-m #- n = error "#- not implemented"
+m #- n = m # n >-> fst
 
+-- 1
 spaces :: Parser String
-spaces =  error "spaces not implemented"
+spaces = iter (char ? isSpace)
 
 token :: Parser a -> Parser a
 token m = m #- spaces
 
+-- 1
 letter :: Parser Char
-letter =  error "letter not implemented"
+letter =  char ? isAlpha
 
 word :: Parser String
 word = token (letter # iter letter >-> cons)
 
+-- 1
 chars :: Int -> Parser String
-chars n =  error "chars not implemented"
+chars n = iter char >-> take n
 
 accept :: String -> Parser String
 accept w = (token (chars (length w))) ? (==w)
 
+-- 1
 require :: String -> Parser String
-require w  = error "require not implemented"
+require w  = accept w ! err ("Expected " ++ w)
 
 lit :: Char -> Parser Char
 lit c = token char ? (==c)
@@ -57,4 +63,3 @@ number' n = digitVal #> (\ d -> number' (10*n+d))
           ! return n
 number :: Parser Integer
 number = token (digitVal #> number')
-
