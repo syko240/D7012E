@@ -1,5 +1,6 @@
 import Data.Char (isAlpha, toLower)
 import Text.Read (readMaybe)
+import Prelude hiding (repeat)
 
 getNput :: IO ()
 getNput = do
