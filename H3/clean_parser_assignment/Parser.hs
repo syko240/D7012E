@@ -18,11 +18,11 @@ cons(a, b) = a:b
 
 -- 1
 (-#) :: Parser a -> Parser b -> Parser b
-m -# n = m # n >-> snd
+m -# n = m # n >-> (\(_, b) -> b)
 
 -- 1
 (#-) :: Parser a -> Parser b -> Parser a
-m #- n = m # n >-> fst
+m #- n = m # n >-> (\(a, _) -> a)
 
 -- 1
 spaces :: Parser String
@@ -40,7 +40,9 @@ word = token (letter # iter letter >-> cons)
 
 -- 1
 chars :: Int -> Parser String
-chars n = iter char >-> take n
+chars n
+    | n <= 0 = return ""
+    | otherwise = char # chars (n-1) >-> \(c, cs) -> c : cs
 
 accept :: String -> Parser String
 accept w = (token (chars (length w))) ? (==w)
