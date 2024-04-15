@@ -12,6 +12,7 @@ data Statement = Assignment String Expr.T
     | Write Expr.T
     | Begin [Statement]
     | While Expr.T Statement
+    | Repeat Statement Expr.T
     deriving Show
 
 assignment = word #- accept ":=" # Expr.parse #- require ";" >-> buildAss
@@ -42,6 +43,10 @@ while = (accept "while" -# Expr.parse #- require "do") # parse >-> build
     where
         build (e, s) = While e s
 
+repeat' = (accept "repeat" -# parse #- require "until") # (Expr.parse #- require ";") >-> build
+    where
+        build (s, e) = Repeat s e
+
 -- 3.d
 exec :: [T] -> Dictionary.T String Integer -> [Integer] -> [Integer]
 
@@ -51,8 +56,7 @@ exec (Assignment var expr : stmts) dict input =
     exec stmts (Dictionary.insert (var, Expr.value expr dict) dict) input
 
 exec (If cond thenStmts elseStmts: stmts) dict input =
-    if (Expr.value cond dict)>0
-    then exec (thenStmts: stmts) dict input
+    if (Expr.value cond dict)>0 then exec (thenStmts: stmts) dict input
     else exec (elseStmts: stmts) dict input
 
 exec (Skip : stmts) dict input =
@@ -68,8 +72,11 @@ exec (Begin xs : stmts) dict input =
     exec (xs ++ stmts) dict input
 
 exec (While cond s : stmts) dict input =
-    if Expr.value cond dict /= 0 then exec (s : While cond s : stmts) dict input
-    else exec stmts dict input
+    if Expr.value cond dict == 0 then exec stmts dict input
+    else exec (s : While cond s : stmts) dict input
+
+exec (Repeat s cond : stmts) dict input =
+    exec (s : If cond Skip (Repeat s cond) : stmts) dict input
 
 instance Parse Statement where
     -- 3.c
@@ -92,4 +99,7 @@ stringBuilder indent stmt = case stmt of
         ++ indentString ++ "end\n"
     While cond s -> indentString ++ "while " ++ Expr.toString cond ++ " do\n"
         ++ stringBuilder (indent + 2) s
+    Repeat s cond -> indentString ++ "repeat\n"
+        ++ stringBuilder (indent + 2) s
+        ++ indentString ++ "until " ++ Expr.toString cond ++ ";\n"
     where indentString = replicate indent ' '
