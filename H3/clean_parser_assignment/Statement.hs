@@ -80,7 +80,7 @@ exec (Repeat s cond : stmts) dict input =
 
 instance Parse Statement where
     -- 3.c
-    parse = assignment ! if' ! skip' ! read' ! write' ! begin ! while
+    parse = assignment ! if' ! skip' ! read' ! write' ! begin ! while ! repeat'
     -- 5
     toString = stringBuilder 0
 
