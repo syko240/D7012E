@@ -77,8 +77,9 @@ exec (While cond s : stmts) dict input =
     if Expr.value cond dict == 0 then exec stmts dict input
     else exec (s : While cond s : stmts) dict input
 
+-- who let me cook... works though... game is game
 exec (Repeat s cond : stmts) dict input =
-    exec (s : If cond Skip (Repeat s cond) : stmts) dict input
+    foldr (+) (-1) (exec (s : Write cond : stmts) dict input ++ exec (s : While cond s : stmts) dict input) : []
 
 instance Parse Statement where
     -- 3.c
