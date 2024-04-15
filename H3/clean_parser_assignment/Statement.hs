@@ -1,3 +1,5 @@
+-- André Roaas
+
 module Statement(T, parse, toString, fromString, exec) where
 import Prelude hiding (return, fail)
 import Parser hiding (T)

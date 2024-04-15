@@ -1,3 +1,5 @@
+-- André Roaas
+
 {- Test for Program -}
 module TestProgram where
 
