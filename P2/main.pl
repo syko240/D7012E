@@ -59,4 +59,33 @@ smallestKSets(K, List, Result) :-
     take(SortedSets, K, Result)
     ).
 
+% Output Formating
+
+output(List, Results) :-
+    format("\tEntire list: ~w~n~n", [List]),
+    format("\tsize\ti\tj\tsublist~n"),
+    printRows(Results, List).
+
+printRows([], _).
+printRows([(Sum, I, J) | T], List) :-
+    I1 is I + 1, J1 is J + 1,
+    sublist(List, I, J, Sublist),
+    format("\t~d\t~d\t~d\t~w~n", [Sum, I1, J1, Sublist]),
+    printRows(T, List).
+
+% Testing
+
+testCase(6, [24, -11, -34, 42, -24, 7, -19, 21]).
+testCase(8, [3, 2, -4, 3, 2, -5, -2, 2, 3, -3, 2, -5, 6, -2, 2, 3]).
+
+test :-
+    forall(testCase(K, List),
+    (smallestKSets(K, List, Result),
+    output(List, Result),
+    format("\n"))).
+
+:- initialization main.
+main :-
+    test.
+
 % smallestKSets(3, [3, 2, -4, 3, 2, -5, -2, 2, 3, -3, 2, -5, 6, -2, 2, 3], Result).
