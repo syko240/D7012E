@@ -1,3 +1,27 @@
+% André Roaas
+
+% Sorting
+
+merge([], Right, Right).
+merge(Left, [], Left).
+merge([(Sum1, I1, J1)|T1], [(Sum2, I2, J2)|T2], [(Sum1, I1, J1)|Merged]) :-
+    Sum1 =< Sum2,
+    merge(T1, [(Sum2, I2, J2)|T2], Merged).
+merge([(Sum1, I1, J1)|T1], [(Sum2, I2, J2)|T2], [(Sum2, I2, J2)|Merged]) :-
+    Sum1 > Sum2,
+    merge([(Sum1, I1, J1)|T1], T2, Merged).
+
+mergeSort([], []).
+mergeSort([X], [X]).
+mergeSort(List, Sorted) :-
+    length(List, Len),
+    Half is Len // 2,
+    length(Left, Half),
+    append(Left, Right, List),
+    mergeSort(Left, SortedLeft),
+    mergeSort(Right, SortedRight),
+    merge(SortedLeft, SortedRight, Sorted).
+
 % Compute Sublists
 
 sum([], 0).
@@ -31,8 +55,8 @@ smallestKSets(K, List, Result) :-
     findSets(List, AllSets),
     length(AllSets, TotalSets),
     (TotalSets =:= 0 -> throw(error('list is empty'))
-    ; K > TotalSets -> Result = AllSets
-    ; take(AllSets, K, Result)
+    ; mergeSort(AllSets, SortedSets),
+    take(SortedSets, K, Result)
     ).
 
 % smallestKSets(3, [3, 2, -4, 3, 2, -5, -2, 2, 3, -3, 2, -5, 6, -2, 2, 3], Result).
