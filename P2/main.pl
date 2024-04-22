@@ -42,11 +42,10 @@ take(List, N, Result) :-
     length(Result, N),
     append(Result, _, List).
 
-findSets(List, Sets) :-
-    length(List, Length),
+findSets(List, N, Sets) :-
     findall((Sum, I, J), (
-        between(0, Length, I),
-        between(I, Length, J),
+        between(0, N, I),
+        between(I, N, J),
         sublist(List, I, J, Sublist),
         sum(Sublist, Sum)
         ), Sets).
@@ -54,7 +53,7 @@ findSets(List, Sets) :-
 smallestKSets(K, List, Result) :-
     length(List, N),
     (N =:= 0 -> throw(error('list is empty'))
-    ; findSets(List, AllSets),
+    ; findSets(List, N, AllSets),
     mergeSort(AllSets, SortedSets),
     take(SortedSets, K, Result)
     ).
