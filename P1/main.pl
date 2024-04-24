@@ -19,17 +19,17 @@ move(state(Room, Items, R1, R2, R3), state(Room, NewItems, NewR1, NewR2, NewR3),
     Length < 2,
     pickUp(Room, Item, Items, NewItems, R1, R2, R3, NewR1, NewR2, NewR3).
 
+% drop
+move(state(Room, Items, R1, R2, R3), state(Room, NewItems, NewR1, NewR2, NewR3), drop(Item)) :-
+    remove(Item, Items, NewItems),
+    drop(Room, Item, R1, R2, R3, NewR1, NewR2, NewR3).
+
 pickUp(r1, Item, Items, [Item|Items], R1, R2, R3, NewR1, R2, R3) :-
     remove(Item, R1, NewR1).
 pickUp(r2, Item, Items, [Item|Items], R1, R2, R3, R1, NewR2, R3) :-
     remove(Item, R2, NewR2).
 pickUp(r3, Item, Items, [Item|Items], R1, R2, R3, R1, R2, NewR3) :-
     remove(Item, R3, NewR3).
-
-% drop
-move(state(Room, Items, R1, R2, R3), state(Room, NewItems, NewR1, NewR2, NewR3), drop(Item)) :-
-    remove(Item, Items, NewItems),
-    drop(Room, Item, R1, R2, R3, NewR1, NewR2, NewR3).
 
 drop(r1, Item, R1, R2, R3, [Item|R1], R2, R3).
 drop(r2, Item, R1, R2, R3, R1, [Item|R2], R3).
