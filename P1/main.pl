@@ -40,14 +40,11 @@ remove(Item, [H|Old], [H|New]) :-
         remove(Item, Old, New).
 
 initState(state(r1, [], [steel_key], [brass_key], [package])).
-goal(state(r2, _, _, [package], _)).
 
 % State(current room, picked items, r1 items, r2 items, r3 items)
-solveR(State, 0, []) :-
-    goal(State), !.
-
 %set_prolog_flag(answer_write_options, [max_depth(0)]).
 
+solveR(state(r2, _, _, [package], _), 0, []).
 solveR(State, N, [(Action, NextState)|Trace]) :-
     N > 0,
     move(State, NextState, Action),
