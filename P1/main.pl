@@ -44,15 +44,16 @@ initState(state(r1, [], [steel_key], [brass_key], [package])).
 % State(current room, picked items, r1 items, r2 items, r3 items)
 %set_prolog_flag(answer_write_options, [max_depth(0)]).
 
-solveR(state(r2, _, _, [package], _), 0, []).
-solveR(State, N, [(Action, NextState)|Trace]) :-
+solveR(state(_, _, _, [package], _), _, [], _) :- !.
+solveR(State, N, [(Action, NextState)|Trace], Hist) :-
     N > 0,
     move(State, NextState, Action),
+    \+ member(NextState, Hist),
     M is N - 1,
-    solveR(NextState, M, Trace).
+    solveR(NextState, M, Trace, [NextState|Hist]).
 
 % initState(S), solveR(S, 12, Trace).
-% set_prolog_flag(answer_write_options, [max_depth(0)]), initState(S), solveR(S, 12, Trace).
+% set_prolog_flag(answer_write_options, [max_depth(0)]), initState(S), solveR(S, 12, Trace, [S]).
 
 output([]).
 output([(A, S)|T]) :-
@@ -62,5 +63,5 @@ output([(A, S)|T]) :-
 solve(N) :-
     initState(S),
     format("~w~n", S),
-    solveR(S, N, Trace),
+    solveR(S, N, Trace, [S]),
     output(Trace).
