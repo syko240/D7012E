@@ -1,32 +1,50 @@
 testBoardWinner1([
-    ['1', '1', '2', '2', '2', '2'],
-    ['1', '1', '2', '2', '2', '2'],
-    ['1', '1', '.', '.', '.', '.'],
-    ['2', '2', '.', '.', '.', '.'],
-    ['2', '2', '.', '.', '.', '.'],
-    ['2', '2', '.', '.', '.', '.']
+    [1,1,2,2,2,2],
+    [1,1,2,2,2,2],
+    [1,1,.,.,.,.],
+    [2,2,.,.,.,.],
+    [2,2,.,.,.,.],
+    [2,2,.,.,.,.]
 ]).
 
 testBoardWinner2([
-    ['2', '2', '2', '2', '2', '2'],
-    ['2', '2', '2', '2', '2', '2'],
-    ['1', '1', '1', '1', '1', '1'],
-    ['1', '1', '1', '1', '1', '1'],
-    ['1', '.', '.', '.', '.', '.'],
-    ['.', '.', '.', '.', '.', '.']
+    [2, 2, 2, 2, 2, 2],
+    [2, 2, 2, 2, 2, 2],
+    [1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1],
+    [1, ., ., ., ., .],
+    [., ., ., ., ., .]
 ]).
 
 test_winner :-
-    testBoardWinner1(Board1),
-    (   winner(Board1, Winner1)
-    ->  write('Winner of Board 1: '), writeln(Winner1)
-    ;   writeln('No winner for Board 1')),
-    writeln(Winner1),
+    testBoardWinner1(Board1), winner(Board1, Winner1), writeln(Winner1),
+    testBoardWinner2(Board2), winner(Board2, Winner2), writeln(Winner2),
 
-    testBoardWinner2(Board2),
-    (   winner(Board2, Winner2)
-    ->  write('Winner of Board 2: '), writeln(Winner2)
-    ;   writeln('No winner for Board 2')),
-    writeln(Winner2).
+    testBoard1(B1), winner(B1, W1), writeln(W1),
+    testBoard2(B2), winner(B2, W2), writeln(W2),
+    testBoard3(B3),winner(B3, W3), writeln(W3),
+    onlyTwos(B4), winner(B4, W4), writeln(W4),
+    onlyOnes(B5), winner(B5, W5), writeln(W5).
 
-    %format('Winner of board 1: ~w~nWinner of board 2: ~w', [Winner1, Winner2]).
+test_moves :-
+    test_moves_initboard,
+    test_moves_board1.
+
+test_moves_initboard :-
+    initBoard(InitBoard),
+    moves(1, InitBoard, MvList),
+    ExpectedMoves = [[1, 3], [2, 4], [3, 1], [4, 2]],
+    validate_moves('InitBoard Player 1', MvList, ExpectedMoves).
+
+test_moves_board1 :-
+    testBoard1(Board),
+    moves(1, Board, MvList1),
+    ExpectedMoves1 = [[1,2], [2,1], [3,4], [4,3]],
+    validate_moves('Board 1 Player 1', MvList1, ExpectedMoves1),
+    moves(2, Board, MvList2),
+    ExpectedMoves2 = [[0,0], [1,3], [2,4], [3,1], [4,2], [5,5]],
+    validate_moves('Board 1 Player 2', MvList2, ExpectedMoves2).
+
+validate_moves(TestName, MvList, ExpectedMoves) :-
+    (MvList = ExpectedMoves -> format('~w: Passed~n', [TestName])
+    ; format('~w: Failed. Expected ~w but got ~w~n', [TestName, ExpectedMoves, MvList])).

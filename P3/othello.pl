@@ -67,11 +67,11 @@
 % given helper: Inital state of the board
 
 initBoard([ [.,.,.,.,.,.], 
-            [.,.,.,.,.,.],
-	    [.,.,1,2,.,.], 
-	    [.,.,2,1,.,.], 
-            [.,.,.,.,.,.], 
-	    [.,.,.,.,.,.] ]).
+            [.,.,.,.,.,.], %(1,3)
+	        [.,.,1,2,.,.], %(2,4)
+	        [.,.,2,1,.,.], %(3,1)
+            [.,.,.,.,.,.], %(4,2)
+	        [.,.,.,.,.,.] ]).
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
 %
@@ -96,16 +96,15 @@ initialize(InitialState, InitialPlyr) :-
 count([], 0, 0).
 count([Row|Rows], C1, C2) :-
     count(Rows, RestC1, RestC2),
-    countRow(Row, RowC1, RowC2),
+    count_row(Row, RowC1, RowC2),
     C1 is RestC1 + RowC1,
     C2 is RestC2 + RowC2.
 
-countRow([], 0, 0).
-countRow(['1'|T], C1, C2) :- countRow(T, RestC1, C2), C1 is RestC1 + 1.
-countRow(['2'|T], C1, C2) :- countRow(T, C1, RestC2), C2 is RestC2 + 1.
-countRow(['.'|T], C1, C2) :- countRow(T, C1, C2).
+count_row([], 0, 0).
+count_row([1|T], C1, C2) :- count_row(T, RestC1, C2), C1 is RestC1 + 1.
+count_row([2|T], C1, C2) :- count_row(T, C1, RestC2), C2 is RestC2 + 1.
+count_row([.|T], C1, C2) :- count_row(T, C1, C2).
 
-% Determine the winner
 winner(State, Plyr) :-
     count(State, C1, C2),
     (C1 < C2, Plyr = 1;
@@ -172,7 +171,25 @@ moves(Plyr, Board, MvList) :-
     findall([X, Y], validmove(Plyr, Board, [X, Y]), Moves),
     sort(Moves, MvList).
 
+merge([], Right, Right).
+merge(Left, [], Left).
+merge([[X1, Y1]|T1], [[X2, Y2]|T2], [[X1, Y1]|Merged]) :-
+    (X1 < X2; X1 == X2, Y1 =< Y2),
+    merge(T1, [[X2, Y2]|T2], Merged).
+merge([[X1, Y1]|T1], [[X2, Y2]|T2], [[X2, Y2]|Merged]) :-
+    (X1 > X2; X1 == X2, Y1 > Y2),
+    merge([[X1, Y1]|T1], T2, Merged).
 
+mergeSort([], []).
+mergeSort([X], [X]).
+mergeSort(List, Sorted) :-
+    length(List, Len),
+    Half is Len // 2,
+    length(Left, Half),
+    append(Left, Right, List),
+    mergeSort(Left, SortedLeft),
+    mergeSort(Right, SortedRight),
+    merge(SortedLeft, SortedRight, Sorted).
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
 %
@@ -182,9 +199,42 @@ moves(Plyr, Board, MvList) :-
 %   - given that Plyr makes Move in State, it determines NewState (i.e. the next 
 %     state) and NextPlayer (i.e. the next player who will move).
 %
+% Apply move and calculate the resulting board and the next player
+nextState(Plyr, [X, Y], State, NewState, NextPlyr) :-
+    set(State, TempState, [X, Y], Plyr),
+    opponent(Plyr, Opp),
+    flip(Plyr, Opp, [X, Y], TempState, NewState),
+    % NEED MORE CHECKING HERE FOR OPP POSSIBLE MOVES
+    NextPlyr = Opp.
 
+flip(Plyr, Opp, [X, Y], State, NewState) :-
+    flip_all_directions(Plyr, Opp, [X, Y], State, State, NewState).
 
+flip_all_directions(_, _, _, NewState, NewState, NewState).
+flip_all_directions(Plyr, Opp, [X, Y], State, AccState, NewState) :-
+    direction(Dir),
+    flip_direction(Plyr, Opp, [X, Y], Dir, AccState, TempState),
+    flip_all_directions(Plyr, Opp, [X, Y], State, TempState, NewState).
 
+flip_direction(Plyr, Opp, [X, Y], [DX, DY], State, NewState) :-
+    step([X, Y], [DX, DY], [NX, NY]),
+    get(State, [NX, NY], P),
+    (P == Opp -> set(State, TempState, [NX, NY], Plyr),
+    flip_direction(Plyr, Opp, [NX, NY], [DX, DY], TempState, NewState)
+    ; NewState = State).
+
+step([X, Y], [DX, DY], [NX, NY]) :-
+    NX is X + DX,
+    NY is Y + DY.
+
+direction([0, 1]).  % N
+direction([1, 1]).  % NE
+direction([1, 0]).  % E
+direction([1, -1]). % SE
+direction([0, -1]). % S
+direction([-1, -1]).% SW
+direction([-1, 0]). % W
+direction([-1, 1]). % NW
 
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
@@ -198,28 +248,28 @@ opponent(1, 2).
 opponent(2, 1).
 
 validmove(Plyr, Board, [X, Y]) :-
-    get(Board, [X, Y], '.'),
+    get(Board, [X, Y], .),
     opponent(Plyr, Opponent),
     member(DX, [-1, 0, 1]),
     member(DY, [-1, 0, 1]),
     (DX \= 0; DY \= 0),
     X1 is X + DX,
     Y1 is Y + DY,
-    validDirection(Board, X, Y, DX, DY, Plyr, Opponent).
+    valid_direction(Board, X, Y, DX, DY, Plyr, Opponent).
 
-validDirection(Board, X, Y, DX, DY, Plyr, Opponent) :-
+valid_direction(Board, X, Y, DX, DY, Plyr, Opponent) :-
     X1 is X + DX,
     Y1 is Y + DY,
     inside_board(X1, Y1),
     get(Board, [X1, Y1], Opponent),
-    validDirection_h(Board, X1, Y1, DX, DY, Plyr).
+    valid_direction_h(Board, X1, Y1, DX, DY, Plyr).
 
-validDirection_h(Board, X, Y, DX, DY, Plyr) :-
+valid_direction_h(Board, X, Y, DX, DY, Plyr) :-
     X2 is X + DX,
     Y2 is Y + DY,
     inside_board(X2, Y2),
     get(Board, [X2, Y2], Value),
-    (Value == Plyr -> true ; Value == Opponent, validDirection_h(Board, X2, Y2, DX, DY, Plyr)).
+    (Value == Plyr -> true ; Value == Opponent, valid_direction_h(Board, X2, Y2, DX, DY, Plyr)).
 
 inside_board(X, Y) :-
     X >= 0, X < 6,
@@ -250,7 +300,7 @@ inside_board(X, Y) :-
 %% define lowerBound(B).  
 %   - returns a value B that is less than the actual or heuristic value
 %     of all states.
-
+lowerBound(-36).
 
 
 
@@ -262,7 +312,7 @@ inside_board(X, Y) :-
 %% define upperBound(B). 
 %   - returns a value B that is greater than the actual or heuristic value
 %     of all states.
-
+upperbound(36).
 
 
 
