@@ -169,7 +169,7 @@ printList([H | L]) :-
 %
 moves(Plyr, Board, MvList) :-
     findall([X, Y], validmove(Plyr, Board, [X, Y]), Moves),
-    sort(Moves, MvList).
+    mergeSort(Moves, MvList).
 
 merge([], Right, Right).
 merge(Left, [], Left).
@@ -204,7 +204,6 @@ nextState(Plyr, [X, Y], State, NewState, NextPlyr) :-
     set(State, TempState, [X, Y], Plyr),
     opponent(Plyr, Opp),
     flip(Plyr, Opp, [X, Y], TempState, NewState),
-    % NEED MORE CHECKING HERE FOR OPP POSSIBLE MOVES
     NextPlyr = Opp.
 
 flip(Plyr, Opp, [X, Y], State, NewState) :-
@@ -288,7 +287,24 @@ inside_board(X, Y) :-
 %   NOTE2. If State is not terminal h should be an estimate of
 %          the value of state (see handout on ideas about
 %          good heuristics.
+h(State, 100) :-
+    terminal(State),
+    winner(State, 1), !.
 
+h(State, -100) :-
+    terminal(State),
+    winner(State, 2), !.
+
+h(State, 0) :-
+    terminal(State),
+    tie(State), !.
+
+h(State, Val) :-
+    not(terminal(State)),
+    count(State, Count1, Count2),
+    Val is Count2 - Count1, !.
+
+h(_, 0).
 
 
 
