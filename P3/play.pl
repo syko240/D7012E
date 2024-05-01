@@ -152,12 +152,12 @@ getmove(2,State,Move) :-
  
 % if State is terminal, use evaluation function 
 mmeval(_,State,Val,_,_,1) :- terminal(State), !,
-  %writeln('Evaluation reached Terminal'), 
+  writeln('Evaluation reached Terminal'), 
   h(State,Val).  
  
 % if depth bound reached, use evaluation function 
 mmeval(_,State,Val,_,0,1) :-  !,
-  %writeln('Evaluation reached Depth Bnd'),
+  writeln('Evaluation reached Depth Bnd'),
   h(State,Val). 
  
 % FOR MAX PLAYER 
@@ -165,9 +165,10 @@ mmeval(_,State,Val,_,0,1) :-  !,
 % terminal and would have been caught above 
  
 mmeval(1,St,Val,BestMv,D,SeF) :- 
+  %showState()
   moves(1,St,MvList), !,
-% length(MvList,L), 
-% write('Evaluating '), write(L), write(' moves at Plyr 1 depth '), writeln(D), 
+  length(MvList,L), 
+  write('Evaluating '), write(L), write(' moves at Plyr 1 depth '), writeln(D), 
   lowerBound(B), % a value strictly less than worst value max can get 
   evalMoves(1,St,MvList,B,null,Val,BestMv,D,0,SeI), % Best so far set to lowerbnd 
   SeF is SeI + 1.  %searched the current state as well as  
@@ -178,8 +179,8 @@ mmeval(1,St,Val,BestMv,D,SeF) :-
  
 mmeval(2,St,Val,BestMv,D,SeF) :- 
   moves(2,St,MvList), !,
-% length(MvList,L), 
-% write('Evaluating '), write(L), write(' moves for Plyr 2 at depth '), writeln(D), 
+  length(MvList,L), 
+  write('Evaluating '), write(L), write(' moves for Plyr 2 at depth '), writeln(D), 
   upperBound(B), % a value strictly less than worst value max can get 
   evalMoves(2,St,MvList,B,null,Val,BestMv,D,0,SeI), % Best so far set to upperbnd 
   SeF is SeI + 1. 
@@ -201,16 +202,19 @@ mmeval(2,St,Val,BestMv,D,SeF) :-
 % if no moves left, return best Val and Mv so far (and number of 
 % states searched. 
 evalMoves(_,_,[],Val,BestMv,Val,BestMv,_,Se,Se) :- !.
-%	write('No more moves Val = '), write(Val),
-%	write(' BestMv = '), write(BestMv), nl.
+ 	%write('No more moves Val = '), write(Val),
+ 	%write(' BestMv = '), write(BestMv), nl.
  
 % otherwise evaluate current move (by calling mmeval on the player/state 
 % that results from this move), and replace current Best move and value 
 % by this Mv/Value if value is "better" 
 
 evalMoves(1,St,[Mv|Rest],ValSoFar,MvSoFar,Val,BestMv,D,Se,SeF) :- 
+  writeln('------------test----------'),
+  format('~w~n', [Mv]),
+  showState(St),
   nextState(1,Mv,St,NewSt,NextPlyr), !,
-%  write('evalMoves 1: '), write(Mv), write(' D='), write(D), write(' S='), write(Se), showState(NewSt),
+  write('evalMoves 1: '), write(Mv), write(' D='), write(D), write(' S='), write(Se), showState(NewSt),
   Dnew is D - 1, 
   mmeval(NextPlyr,NewSt,MvVal,_,Dnew,SeI), !,
   maxMove(ValSoFar,MvSoFar,MvVal,Mv,NewValSoFar,NewMvSoFar), 
@@ -220,7 +224,7 @@ evalMoves(1,St,[Mv|Rest],ValSoFar,MvSoFar,Val,BestMv,D,Se,SeF) :-
  
 evalMoves(2,St,[Mv|Rest],ValSoFar,MvSoFar,Val,BestMv,D,Se,SeF) :- 
   nextState(2,Mv,St,NewSt,NextPlyr), !,
-%  write('evalMoves 2: '), write(Mv), write(' D='), write(D), write(' S='), write(Se), showState(NewSt),
+  write('evalMoves 2: '), write(Mv), write(' D='), write(D), write(' S='), write(Se), showState(NewSt),
   Dnew is D - 1, 
   mmeval(NextPlyr,NewSt,MvVal,_,Dnew,SeI),  !,
   minMove(ValSoFar,MvSoFar,MvVal,Mv,NewValSoFar,NewMvSoFar), 

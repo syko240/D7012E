@@ -106,6 +106,7 @@ count_row([2|T], C1, C2) :- count_row(T, C1, RestC2), C2 is RestC2 + 1.
 count_row([.|T], C1, C2) :- count_row(T, C1, C2).
 
 winner(State, Plyr) :-
+    terminal(State),
     count(State, C1, C2),
     (C1 < C2, Plyr = 1;
      C2 < C1, Plyr = 2).
@@ -167,29 +168,10 @@ printList([H | L]) :-
 %% define moves(Plyr,State,MvList). 
 %   - returns list MvList of all legal moves Plyr can make in State
 %
+
 moves(Plyr, Board, MvList) :-
     findall([X, Y], validmove(Plyr, Board, [X, Y]), Moves),
-    mergeSort(Moves, MvList).
-
-merge([], Right, Right).
-merge(Left, [], Left).
-merge([[X1, Y1]|T1], [[X2, Y2]|T2], [[X1, Y1]|Merged]) :-
-    (X1 < X2; X1 == X2, Y1 =< Y2),
-    merge(T1, [[X2, Y2]|T2], Merged).
-merge([[X1, Y1]|T1], [[X2, Y2]|T2], [[X2, Y2]|Merged]) :-
-    (X1 > X2; X1 == X2, Y1 > Y2),
-    merge([[X1, Y1]|T1], T2, Merged).
-
-mergeSort([], []).
-mergeSort([X], [X]).
-mergeSort(List, Sorted) :-
-    length(List, Len),
-    Half is Len // 2,
-    length(Left, Half),
-    append(Left, Right, List),
-    mergeSort(Left, SortedLeft),
-    mergeSort(Right, SortedRight),
-    merge(SortedLeft, SortedRight, Sorted).
+    sort(Moves, MvList).
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
 %
@@ -203,24 +185,57 @@ mergeSort(List, Sorted) :-
 nextState(Plyr, [X, Y], State, NewState, NextPlyr) :-
     set(State, TempState, [X, Y], Plyr),
     opponent(Plyr, Opp),
-    flip(Plyr, Opp, [X, Y], TempState, NewState),
+    flip(Plyr, [X, Y], direction(Dir), TempState, NewState),
     NextPlyr = Opp.
 
-flip(Plyr, Opp, [X, Y], State, NewState) :-
-    flip_all_directions(Plyr, Opp, [X, Y], State, State, NewState).
+flip(_, _, [], State, State).
+flip(Plyr, [X, Y], [[DX, DY]|Dir], State, NewState) :-
+    flip_in_direction(Plyr, Plyr, 1, [X, Y], [DX, DY], State, NewState),
+    flip(Plyr, [X, Y], Dirs, State, NewState).
 
-flip_all_directions(_, _, _, NewState, NewState, NewState).
-flip_all_directions(Plyr, Opp, [X, Y], State, AccState, NewState) :-
-    direction(Dir),
-    flip_direction(Plyr, Opp, [X, Y], Dir, AccState, TempState),
-    flip_all_directions(Plyr, Opp, [X, Y], State, TempState, NewState).
+flip_in_direction(Plyr, Prev, Cont, [X, Y], [DX, DY], State, NewState) :-
+    (Cont == 1 ->
+        opponent(Plyr, Opp),
+        NX is X + DX, NY is Y + DY,
+        inside_board(NX, NY),
+        get(State, [NX, NY], Val),
+        (Val == Opp -> set(State, TempState, [NX, NY], Plyr), flip_in_direction(Plyr, Opp, Cont, [NX, NY], [DX, DY], TempState, NewState)
+        ; Val == Plyr, Prev == Opp -> flip_in_direction(Plyr, Opp, 0, [NX, NY], [DX, DY], State, State))
+        ; flip_in_direction(Plyr, Opp, 0, [NX, NY], [DX, DY], State, State))
+    ).
 
-flip_direction(Plyr, Opp, [X, Y], [DX, DY], State, NewState) :-
-    step([X, Y], [DX, DY], [NX, NY]),
-    get(State, [NX, NY], P),
-    (P == Opp -> set(State, TempState, [NX, NY], Plyr),
-    flip_direction(Plyr, Opp, [NX, NY], [DX, DY], TempState, NewState)
-    ; NewState = State).
+flip(Plyr, [X, Y], State, NewState) :-
+    findall(Dir, direction(Dir), Directions),
+    flip_in_directions(Plyr, [X, Y], Directions, State, NewState).
+
+flip_in_directions(Plyr, Move, [], State, State).
+flip_in_directions(Plyr, [X, Y], [Dir|Dirs], State, NewState) :-
+    flip_in_direction(Plyr, [X, Y], Dir, State, TempState),
+    flip_in_directions(Plyr, [X, Y], Dirs, TempState, NewState).
+
+flip_in_direction(Plyr, [X, Y], [DX, DY], State, NewState) :-
+    find_opponent_stones(Plyr, [X, Y], [DX, DY], State, [], OpponentStones),
+    flip_stones_if_ended_by_player(Plyr, OpponentStones, State, NewState).
+
+find_opponent_stones(Plyr, [X, Y], [DX, DY], State, Acc, OpponentStones) :-
+    NX is X + DX, NY is Y + DY,
+    inside_board(NX, NY),
+    get(State, [NX, NY], CellValue),
+    (CellValue == Opponent ->
+        find_opponent_stones(Plyr, [NX, NY], [DX, DY], State, [[NX, NY]|Acc], OpponentStones);
+     CellValue == Plyr -> OpponentStones = Acc; OpponentStones = []).
+
+flip_stones_if_ended_by_player(Plyr, Stones, State, State) :-
+    Stones = [].
+flip_stones_if_ended_by_player(Plyr, Stones, State, NewState) :-
+    Stones \= [],
+    flip_stones(Stones, Plyr, State, NewState).
+
+flip_stones([], _, State, State).
+flip_stones([[X, Y]|Rest], Plyr, State, NewState) :-
+    set(State, TempState, [X, Y], Plyr),
+    flip_stones(Rest, Plyr, TempState, NewState).
+
 
 step([X, Y], [DX, DY], [NX, NY]) :-
     NX is X + DX,
@@ -287,24 +302,10 @@ inside_board(X, Y) :-
 %   NOTE2. If State is not terminal h should be an estimate of
 %          the value of state (see handout on ideas about
 %          good heuristics.
-h(State, 100) :-
-    terminal(State),
-    winner(State, 1), !.
-
-h(State, -100) :-
-    terminal(State),
-    winner(State, 2), !.
-
-h(State, 0) :-
-    terminal(State),
-    tie(State), !.
-
-h(State, Val) :-
-    not(terminal(State)),
-    count(State, Count1, Count2),
-    Val is Count2 - Count1, !.
-
-h(_, 0).
+h(State,1) :- winner(State,1), !.
+h(State,-1) :- winner(State,2), !.
+h(State,0) :- tie(State), !.
+h(_,0). % otherwise no heuristic guidance used
 
 
 
@@ -316,7 +317,7 @@ h(_, 0).
 %% define lowerBound(B).  
 %   - returns a value B that is less than the actual or heuristic value
 %     of all states.
-lowerBound(-36).
+lowerBound(-37).
 
 
 
@@ -328,7 +329,7 @@ lowerBound(-36).
 %% define upperBound(B). 
 %   - returns a value B that is greater than the actual or heuristic value
 %     of all states.
-upperbound(36).
+upperBound(37).
 
 
 

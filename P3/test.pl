@@ -1,3 +1,6 @@
+:- ensure_loaded('othello.pl').
+:- ensure_loaded('testboards.pl').
+
 testBoardWinner1([
     [1,1,2,2,2,2],
     [1,1,2,2,2,2],
@@ -13,6 +16,15 @@ testBoardWinner2([
     [1, 1, 1, 1, 1, 1],
     [1, 1, 1, 1, 1, 1],
     [1, ., ., ., ., .],
+    [., ., ., ., ., .]
+]).
+
+testBoardMoves([
+    [., ., ., ., ., .],
+    [., ., ., ., ., .],
+    [., 2, 2, 2, ., .],
+    [., 1, 1, 1, ., .],
+    [., ., ., ., ., .],
     [., ., ., ., ., .]
 ]).
 
@@ -36,6 +48,12 @@ test_moves_initboard :-
     ExpectedMoves = [[1, 3], [2, 4], [3, 1], [4, 2]],
     validate_moves('InitBoard Player 1', MvList, ExpectedMoves).
 
+test_moves_board0 :-
+    testBoardMoves(Board),
+    moves(1, Board, MvList),
+    ExpectedMoves = [[0, 1], [1, 1], [2, 1], [3, 1], [4, 1]],
+    validate_moves('Board0 Player 1', MvList, ExpectedMoves).
+
 test_moves_board1 :-
     testBoard1(Board),
     moves(1, Board, MvList1),
@@ -48,3 +66,26 @@ test_moves_board1 :-
 validate_moves(TestName, MvList, ExpectedMoves) :-
     (MvList = ExpectedMoves -> format('~w: Passed~n', [TestName])
     ; format('~w: Failed. Expected ~w but got ~w~n', [TestName, ExpectedMoves, MvList])).
+
+test_nextstate0 :-
+    testBoardMoves(Board),
+    showState(Board),
+    nextState(1, [0, 1], Board, NewBoard, NextPlyr),
+    format('~n'),
+    showState(NewBoard).
+
+test_nextstate :-
+    initBoard(Board),
+    showState(Board),
+    test_nextstate1(Board, NewBoard),
+    format('~n'),
+    showState(NewBoard),
+    test_nextstate2(NewBoard, NewBoard1),
+    format('~n'),
+    showState(NewBoard1).
+
+test_nextstate1(Board, NewBoard) :-
+    nextState(1, [1, 3], Board, NewBoard, NextPlyr).
+
+test_nextstate2(Board, NewBoard) :-
+    nextState(2, [1, 2], Board, NewBoard, NextPlyr).
