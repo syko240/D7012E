@@ -3,8 +3,8 @@
 %    D7012E Declarative languages
 %    Luleå University of Technology
 %
-%    Student full name: <TO BE FILLED IN BEFORE THE GRADING> 
-%    Student user id  : <TO BE FILLED IN BEFORE THE GRADING> 
+%    Student full name: André Roaas
+%    Student user id  : androa-0
 %
 /* ------------------------------------------------------- */
 
@@ -121,9 +121,12 @@ winner(State, Plyr) :-
 %    - true if terminal State is a "tie" (no winner) 
 % Check if the game is a tie
 tie(State) :-
-    count(State, C1, C2),
+    /*count(State, C1, C2),
     C1 == C2,
-    terminal(State).
+    terminal(State).*/
+    terminal(State),
+    count(State, C1, C2),
+    P1 = P2.
 
 
 
@@ -135,8 +138,12 @@ tie(State) :-
 %   - true if State is a terminal   
 % Check if the state is terminal
 terminal(State) :-
-    not(moves(1, State, MvList1)), not(moves(2, State, MvList2)),
-    (MvList1 = [], MvList2 = []).
+    /*not(moves(1, State, MvList1)), not(moves(2, State, MvList2)),
+    (MvList1 = [], MvList2 = []).*/
+    moves(1, State, MvList1),
+    moves(2, State, MvList2),
+    MvList1 = [n],
+    MvList2 = [n].
 
 
 
@@ -185,70 +192,30 @@ moves(Plyr, Board, MvList) :-
 nextState(Plyr, [X, Y], State, NewState, NextPlyr) :-
     set(State, TempState, [X, Y], Plyr),
     opponent(Plyr, Opp),
-    flip(Plyr, [X, Y], direction(Dir), TempState, NewState),
+    directions(Dir),
+    flip(Plyr, [X, Y], Dir, TempState, NewState),
     NextPlyr = Opp.
 
 flip(_, _, [], State, State).
-flip(Plyr, [X, Y], [[DX, DY]|Dir], State, NewState) :-
-    flip_in_direction(Plyr, Plyr, 1, [X, Y], [DX, DY], State, NewState),
-    flip(Plyr, [X, Y], Dirs, State, NewState).
+flip(Plyr, [X, Y], [Dir|Dirs], State, NewState) :-
+    %format('dir: ~w ~n', [Dir]),
+    flip_in_direction(Plyr, [X, Y], Dir, State, State, TempState),
+    flip(Plyr, [X, Y], Dirs, TempState, NewState).
 
-flip_in_direction(Plyr, Prev, Cont, [X, Y], [DX, DY], State, NewState) :-
-    (Cont == 1 ->
-        opponent(Plyr, Opp),
-        NX is X + DX, NY is Y + DY,
-        inside_board(NX, NY),
-        get(State, [NX, NY], Val),
-        (Val == Opp -> set(State, TempState, [NX, NY], Plyr), flip_in_direction(Plyr, Opp, Cont, [NX, NY], [DX, DY], TempState, NewState)
-        ; Val == Plyr, Prev == Opp -> flip_in_direction(Plyr, Opp, 0, [NX, NY], [DX, DY], State, State))
-        ; flip_in_direction(Plyr, Opp, 0, [NX, NY], [DX, DY], State, State))
-    ).
-
-flip(Plyr, [X, Y], State, NewState) :-
-    findall(Dir, direction(Dir), Directions),
-    flip_in_directions(Plyr, [X, Y], Directions, State, NewState).
-
-flip_in_directions(Plyr, Move, [], State, State).
-flip_in_directions(Plyr, [X, Y], [Dir|Dirs], State, NewState) :-
-    flip_in_direction(Plyr, [X, Y], Dir, State, TempState),
-    flip_in_directions(Plyr, [X, Y], Dirs, TempState, NewState).
-
-flip_in_direction(Plyr, [X, Y], [DX, DY], State, NewState) :-
-    find_opponent_stones(Plyr, [X, Y], [DX, DY], State, [], OpponentStones),
-    flip_stones_if_ended_by_player(Plyr, OpponentStones, State, NewState).
-
-find_opponent_stones(Plyr, [X, Y], [DX, DY], State, Acc, OpponentStones) :-
-    NX is X + DX, NY is Y + DY,
-    inside_board(NX, NY),
-    get(State, [NX, NY], CellValue),
-    (CellValue == Opponent ->
-        find_opponent_stones(Plyr, [NX, NY], [DX, DY], State, [[NX, NY]|Acc], OpponentStones);
-     CellValue == Plyr -> OpponentStones = Acc; OpponentStones = []).
-
-flip_stones_if_ended_by_player(Plyr, Stones, State, State) :-
-    Stones = [].
-flip_stones_if_ended_by_player(Plyr, Stones, State, NewState) :-
-    Stones \= [],
-    flip_stones(Stones, Plyr, State, NewState).
-
-flip_stones([], _, State, State).
-flip_stones([[X, Y]|Rest], Plyr, State, NewState) :-
-    set(State, TempState, [X, Y], Plyr),
-    flip_stones(Rest, Plyr, TempState, NewState).
-
-
-step([X, Y], [DX, DY], [NX, NY]) :-
+flip_in_direction(Plyr, [X, Y], [DX, DY], S, State, NewState) :-
     NX is X + DX,
-    NY is Y + DY.
+    NY is Y + DY,
+    %format('pos: [~w,~w] ~n', [NX, NY]),
+    (inside_board(NX, NY) ->  get(State, [NX, NY], Val), opponent(Plyr, Opp),
+        (Val == Opp ->  set(State, TempState, [NX, NY], Plyr),
+            flip_in_direction(Plyr, [NX, NY], [DX, DY], S, TempState, NewState)
+        ; Val == Plyr -> NewState = State
+        ; Val == '.' -> NewState = S
+        ; NewState = State)
+    ; NewState = State).
 
-direction([0, 1]).  % N
-direction([1, 1]).  % NE
-direction([1, 0]).  % E
-direction([1, -1]). % SE
-direction([0, -1]). % S
-direction([-1, -1]).% SW
-direction([-1, 0]). % W
-direction([-1, 1]). % NW
+directions(Dirs) :-
+    Dirs = [[0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1], [-1, 0], [-1, 1]].
 
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
@@ -305,7 +272,7 @@ inside_board(X, Y) :-
 h(State,1) :- winner(State,1), !.
 h(State,-1) :- winner(State,2), !.
 h(State,0) :- tie(State), !.
-h(_,0). % otherwise no heuristic guidance used
+h(_,0).
 
 
 
