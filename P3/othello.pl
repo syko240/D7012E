@@ -191,10 +191,11 @@ moves(Plyr, Board, MvList) :-
 % Apply move and calculate the resulting board and the next player
 nextState(Plyr, [X, Y], State, NewState, NextPlyr) :-
     set(State, TempState, [X, Y], Plyr),
-    opponent(Plyr, Opp),
     directions(Dir),
     flip(Plyr, [X, Y], Dir, TempState, NewState),
-    NextPlyr = Opp.
+    opponent(Plyr, Opp),
+    moves(Opp, NewState, MvList),
+    (MvList == [] -> NextPlyr = NextPlyr ; NextPlyr = Opp).
 
 flip(_, _, [], State, State).
 flip(Plyr, [X, Y], [Dir|Dirs], State, NewState) :-
@@ -206,7 +207,7 @@ flip_in_direction(Plyr, [X, Y], [DX, DY], S, State, NewState) :-
     NX is X + DX,
     NY is Y + DY,
     %format('pos: [~w,~w] ~n', [NX, NY]),
-    (inside_board(NX, NY) ->  get(State, [NX, NY], Val), opponent(Plyr, Opp),
+    (inside_board(NX, NY) -> get(State, [NX, NY], Val), opponent(Plyr, Opp),
         (Val == Opp ->  set(State, TempState, [NX, NY], Plyr),
             flip_in_direction(Plyr, [NX, NY], [DX, DY], S, TempState, NewState)
         ; Val == Plyr -> NewState = State
@@ -228,29 +229,33 @@ directions(Dirs) :-
 opponent(1, 2).
 opponent(2, 1).
 
-validmove(Plyr, Board, [X, Y]) :-
-    get(Board, [X, Y], .),
-    opponent(Plyr, Opponent),
-    member(DX, [-1, 0, 1]),
-    member(DY, [-1, 0, 1]),
-    (DX \= 0; DY \= 0),
-    X1 is X + DX,
-    Y1 is Y + DY,
-    valid_direction(Board, X, Y, DX, DY, Plyr, Opponent).
+validmove(Plyr, State, [X, Y]) :-
+    get(State, [X, Y], Val),
+    Val == '.',
+    opponent(Plyr, Opp),
+    directions(Dirs),
+    check(Plyr, Opp, State, [X, Y], Dirs).
 
-valid_direction(Board, X, Y, DX, DY, Plyr, Opponent) :-
-    X1 is X + DX,
-    Y1 is Y + DY,
-    inside_board(X1, Y1),
-    get(Board, [X1, Y1], Opponent),
-    valid_direction_h(Board, X1, Y1, DX, DY, Plyr).
+check(Plyr, Opp, State, [X, Y], [Dir|Dirs]) :-
+    (check_direction(Plyr, Opp, State, [X, Y], Dir) -> true
+    ; check(Plyr, Opp, State, [X, Y], Dirs)).
+check(_, _, _, _, []) :- fail.
 
-valid_direction_h(Board, X, Y, DX, DY, Plyr) :-
-    X2 is X + DX,
-    Y2 is Y + DY,
-    inside_board(X2, Y2),
-    get(Board, [X2, Y2], Value),
-    (Value == Plyr -> true ; Value == Opponent, valid_direction_h(Board, X2, Y2, DX, DY, Plyr)).
+check_direction(Plyr, Opp, State, [X, Y], [DX, DY]) :-
+    NX is X + DX,
+    NY is Y + DY,
+    inside_board(NX, NY),
+    get(State, [NX, NY], Val),
+    Val == Opp,
+    cont_check(Plyr, Opp, State, [NX, NY], [DX, DY]).
+
+cont_check(Plyr, Opp, State, [X, Y], [DX, DY]) :-
+    NX is X + DX,
+    NY is Y + DY,
+    inside_board(NX, NY),
+    get(State, [NX, NY], Val),
+    (Val == Opp -> cont_check(Plyr, Opp, State, [NX, NY], [DX, DY])
+    ; Val == Plyr).
 
 inside_board(X, Y) :-
     X >= 0, X < 6,

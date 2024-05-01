@@ -44,9 +44,18 @@ testBoardMoves2([
     [., ., ., ., ., .]
 ]).
 
-/*. . . . . .
-. 1 . . . .
-. 1 1 2 . .
+testBoardMoves3([
+    [2, 1, 1, ., ., .],
+    [2, 2, ., 1, ., .],
+    [2, 1, 1, 1, ., .],
+    [., 1, 1, 1, ., .],
+    [., ., ., ., ., .],
+    [., ., ., ., ., .]
+]).
+
+/*2 1 . . . .
+2 2 . 1 . .
+2 1 1 1 . .
 . 1 1 1 . .
 . . . . . .
 . . . . . .*/
@@ -63,7 +72,10 @@ test_winner :-
 
 test_moves :-
     test_moves_initboard,
-    test_moves_board1.
+    test_moves_board0,
+    test_moves_board1,
+    test_moves_board2,
+    test_moves_board3.
 
 test_shackmove :-
     testBoard6(Board),
@@ -74,8 +86,17 @@ test_shackmove :-
 test_moves_board2 :-
     testBoardMoves2(Board),
     moves(2, Board, MvList),
-    ExpectedMoves = [],
+    ExpectedMoves = [[0,2], [1,4], [3,4]],
     validate_moves('Board Player 2', MvList, ExpectedMoves).
+
+test_moves_board3 :-
+    testBoardMoves3(Board),
+    moves(1, Board, MvList),
+    ExpectedMoves = [],
+    validate_moves('Board Player 1', MvList, ExpectedMoves),
+    moves(2, Board, MvList2),
+    ExpectedMoves2 = [[1,4], [2,4], [3,0], [3,4], [4,2], [4,4]],
+    validate_moves('Board Player 2', MvList2, ExpectedMoves2).
 
 test_moves_initboard :-
     initBoard(InitBoard),

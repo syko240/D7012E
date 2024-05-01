@@ -183,7 +183,6 @@ mmeval(2,St,Val,BestMv,D,SeF) :-
   %write('Evaluating '), write(L), write(' moves for Plyr 2 at depth '), writeln(D), 
   upperBound(B), % a value strictly less than worst value max can get 
   evalMoves(2,St,MvList,B,null,Val,BestMv,D,0,SeI), % Best so far set to upperbnd 
-  format(BestMv),
   SeF is SeI + 1. 
  
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
