@@ -53,12 +53,49 @@ testBoardMoves3([
     [., ., ., ., ., .]
 ]).
 
-/*2 1 . . . .
-2 2 . 1 . .
-2 1 1 1 . .
-. 1 1 1 . .
-. . . . . .
-. . . . . .*/
+testBoardNewState4([
+    [2, ., ., ., ., .],
+    [2, 2, ., 1, ., .],
+    [2, 2, 1, 1, ., .],
+    [., 2, 1, 1, ., .],
+    [., 1, ., ., ., .],
+    [1, ., ., ., ., .]
+]).
+
+testBoard100([
+    [2, 2, 2, 2, 2, 2],
+    [2, 1, 1, 1, 1, 2],
+    [2, 1, ., ., 1, 2],
+    [2, 1, ., ., 1, 2],
+    [2, 1, 1, 1, 1, 2],
+    [2, 2, 2, 2, 2, 2]
+]).
+
+testBoardMoves4([
+    [1, 1, 1, 1, ., 1],
+    [1, 1, 1, 1, 1, .],
+    [1, 1, 1, 1, 2, .],
+    [1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1],
+    [2, 2, 2, 2, 2, 2]
+]).
+
+testBoardMoves5([
+    [1, 1, 1, 1, 1, 2],
+    [1, 1, 1, 1, 1, 2],
+    [2, 1, 1, 1, 1, 2],
+    [2, 2, 1, 1, 1, .],
+    [2, 2, 2, 2, 1, .],
+    [2, 2, 2, 2, 1, .]
+]).
+
+/*
+1 1 1 1 1 2
+1 1 1 1 1 2
+2 1 1 1 1 2
+2 2 1 1 1 .
+2 2 2 2 1 .
+2 2 2 2 1 .*/
 
 test_winner :-
     testBoardWinner1(Board1), winner(Board1, Winner1), writeln(Winner1),
@@ -75,7 +112,9 @@ test_moves :-
     test_moves_board0,
     test_moves_board1,
     test_moves_board2,
-    test_moves_board3.
+    test_moves_board3,
+    test_moves_board4,
+    test_moves_board5.
 
 test_shackmove :-
     testBoard6(Board),
@@ -97,6 +136,18 @@ test_moves_board3 :-
     moves(2, Board, MvList2),
     ExpectedMoves2 = [[1,4], [2,4], [3,0], [3,4], [4,2], [4,4]],
     validate_moves('Board Player 2', MvList2, ExpectedMoves2).
+
+test_moves_board4 :-
+    testBoardMoves4(Board),
+    moves(2, Board, MvList),
+    ExpectedMoves = [[4,0], [5,2]],
+    validate_moves('Board Player 2', MvList, ExpectedMoves).
+
+test_moves_board5 :-
+    testBoardMoves5(Board),
+    moves(2, Board, MvList),
+    ExpectedMoves = [[5,3], [5,4], [5,5]],
+    validate_moves('Board Player 2', MvList, ExpectedMoves).
 
 test_moves_initboard :-
     initBoard(InitBoard),
@@ -127,6 +178,13 @@ test_nextstate0 :-
     testBoardMoves(Board),
     showState(Board),
     nextState(1, [0, 1], Board, NewBoard, NextPlyr),
+    format('~n'),
+    showState(NewBoard).
+
+test_nextstate2 :-
+    testBoardNewState4(Board),
+    showState(Board),
+    nextState(2, [1, 5], Board, NewBoard, NextPlyr),
     format('~n'),
     showState(NewBoard).
 

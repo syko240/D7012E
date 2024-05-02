@@ -121,12 +121,9 @@ winner(State, Plyr) :-
 %    - true if terminal State is a "tie" (no winner) 
 % Check if the game is a tie
 tie(State) :-
-    /*count(State, C1, C2),
-    C1 == C2,
-    terminal(State).*/
     terminal(State),
     count(State, C1, C2),
-    P1 = P2.
+    C1 == C2.
 
 
 
@@ -138,12 +135,10 @@ tie(State) :-
 %   - true if State is a terminal   
 % Check if the state is terminal
 terminal(State) :-
-    /*not(moves(1, State, MvList1)), not(moves(2, State, MvList2)),
-    (MvList1 = [], MvList2 = []).*/
     moves(1, State, MvList1),
     moves(2, State, MvList2),
-    MvList1 = [n],
-    MvList2 = [n].
+    MvList1 = [],
+    MvList2 = [].
 
 
 
@@ -195,7 +190,7 @@ nextState(Plyr, [X, Y], State, NewState, NextPlyr) :-
     flip(Plyr, [X, Y], Dir, TempState, NewState),
     opponent(Plyr, Opp),
     moves(Opp, NewState, MvList),
-    (MvList == [] -> NextPlyr = NextPlyr ; NextPlyr = Opp).
+    (MvList == [] -> NextPlyr = Plyr ; NextPlyr = Opp).
 
 flip(_, _, [], State, State).
 flip(Plyr, [X, Y], [Dir|Dirs], State, NewState) :-
@@ -213,10 +208,9 @@ flip_in_direction(Plyr, [X, Y], [DX, DY], S, State, NewState) :-
         ; Val == Plyr -> NewState = State
         ; Val == '.' -> NewState = S
         ; NewState = State)
-    ; NewState = State).
+    ; NewState = S).
 
-directions(Dirs) :-
-    Dirs = [[0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1], [-1, 0], [-1, 1]].
+directions([[0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1], [-1, 0], [-1, 1]]).
 
 
 % DO NOT CHANGE THIS BLOCK OF COMMENTS.
@@ -274,10 +268,15 @@ inside_board(X, Y) :-
 %   NOTE2. If State is not terminal h should be an estimate of
 %          the value of state (see handout on ideas about
 %          good heuristics.
-h(State,1) :- winner(State,1), !.
-h(State,-1) :- winner(State,2), !.
-h(State,0) :- tie(State), !.
-h(_,0).
+
+h(State, Val) :-
+    terminal(State), !,
+    (winner(State, 1) -> Val = 100 ; winner(State, 2) -> Val = -100
+    ; tie(State) -> Val = 0 ; true -> Val = 0).
+
+h(State, Val) :-
+    count(State, C1, C2),
+    Val is C2 - C1.
 
 
 
@@ -289,7 +288,7 @@ h(_,0).
 %% define lowerBound(B).  
 %   - returns a value B that is less than the actual or heuristic value
 %     of all states.
-lowerBound(-37).
+lowerBound(-101).
 
 
 
@@ -301,7 +300,7 @@ lowerBound(-37).
 %% define upperBound(B). 
 %   - returns a value B that is greater than the actual or heuristic value
 %     of all states.
-upperBound(37).
+upperBound(101).
 
 
 
